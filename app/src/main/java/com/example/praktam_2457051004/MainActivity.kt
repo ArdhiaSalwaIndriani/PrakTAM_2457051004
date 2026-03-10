@@ -7,28 +7,20 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale.Companion.Crop
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,9 +31,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            PrakTAM_2457051004Theme() {
+            PrakTAM_2457051004Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(innerPadding)
+                    HalamanUtama(innerPadding)
                 }
             }
         }
@@ -49,8 +41,9 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(innerPadding: PaddingValues) {
-    val DataList = FasilinkSource.LaporKampus
+fun HalamanUtama(innerPadding: PaddingValues) {
+
+    val daftarLaporan = FasilinkSource.LaporKampus
 
     Column(
         modifier = Modifier
@@ -58,46 +51,69 @@ fun Greeting(innerPadding: PaddingValues) {
             .background(Color(0xFFFFF8F0))
             .padding(innerPadding)
     ) {
-        // Header
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0xFF4E342E))
-                .padding(all = 24.dp)
+                .padding(horizontal = 16.dp, vertical = 28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "Ardhia Salwa Indriani", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            Text(text = "NPM: 2457051004 · Kelas: B", fontSize = 13.sp, color = Color.White)
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(text = "Pusat Laporan Fasilitas Kampus", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            HorizontalDivider(modifier = Modifier.padding(top = 10.dp), color = Color.White, thickness = 1.dp)
+            Text(
+                text = "Pusat Laporan Fasilitas Kampus",
+                        fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                textAlign = TextAlign.Center
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(top = 10.dp),
+                color = Color.White,
+                thickness = 1.dp
+            )
         }
 
-        LazyColumn(modifier = Modifier.padding(all = 16.dp)) {
-            items(DataList) { Fasilink ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            contentPadding = PaddingValues(bottom = 10.dp)
+        ) {
+            items(daftarLaporan) { laporan ->
+
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    elevation = CardDefaults.cardElevation(3.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
-                    Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
                         Image(
-                            painter = painterResource(id = Fasilink.imageRes),
-                            contentDescription = Fasilink.namaBenda,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(180.dp)
-                                .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
+                            painter = painterResource(id = laporan.imageRes),
+                            contentDescription = laporan.namaBenda,
+                            modifier = Modifier.size(110.dp).clip(RoundedCornerShape(8.dp)),
                             contentScale = Crop
                         )
-                        Column(modifier = Modifier.padding(all = 12.dp)) {
-                            Text(text = "Nama: ${Fasilink.namaBenda}", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
-                            Text(text = "JenisGangguan: ${Fasilink.jenisGangguan}", fontSize = 14.sp)
-                            Text(text = "Lokasi: ${Fasilink.lokasi}", fontSize = 14.sp)
-                            Text(text = "TanggalLaporan: ${Fasilink.tanggalLaporan}", fontSize = 14.sp, color = Color.Gray)
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = laporan.namaBenda, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFF3E2723))
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(text = "Gangguan: ${laporan.jenisGangguan}", fontSize = 12.sp, color = Color(0xFF5D4037))
+                            Text(text = "Lokasi: ${laporan.lokasi}", fontSize = 12.sp, color = Color(0xFF5D4037))
+                            Text(text = "${laporan.tanggalLaporan}", fontSize = 11.sp, color = Color.Gray)
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Button(
+                                onClick = {},
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4E342E)),
+                                contentPadding = PaddingValues(vertical = 4.dp)
+                            ) { Text("Detail", fontSize = 12.sp, color = Color.White) }
+
                         }
                     }
                 }
@@ -108,8 +124,8 @@ fun Greeting(innerPadding: PaddingValues) {
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
-    PrakTAM_2457051004Theme() {
-        Greeting(PaddingValues(3.dp))
+fun PreviewHalaman() {
+    PrakTAM_2457051004Theme {
+        HalamanUtama(PaddingValues(3.dp))
     }
 }

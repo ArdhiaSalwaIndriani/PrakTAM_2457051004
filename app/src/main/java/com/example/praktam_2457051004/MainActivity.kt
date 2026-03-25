@@ -9,18 +9,24 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale.Companion.Crop
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,85 +48,228 @@ class MainActivity : ComponentActivity() {
 
 enum class StatusLaporan { PROSES, SELESAI }
 
-fun warnaBadge(status: StatusLaporan) = when (status) {
-    StatusLaporan.PROSES  -> Color(0xFF1976D2)
-    StatusLaporan.SELESAI -> Color(0xFF388E3C)
-}
-
-fun teksStatus(status: StatusLaporan) = when (status) {
-    StatusLaporan.PROSES  -> "Diproses"
-    StatusLaporan.SELESAI -> "Selesai"
-}
-
 @Composable
 fun HalamanUtama(innerPadding: PaddingValues) {
 
     val daftarLaporan = FasilinkSource.LaporKampus
 
-    var kataCari by remember { mutableStateOf("") }
-
-    val laporanFilter = if (kataCari.isBlank()) daftarLaporan
-    else daftarLaporan.filter {
-        it.namaBenda.contains(kataCari, ignoreCase = true) ||
-                it.lokasi.contains(kataCari, ignoreCase = true) ||
-                it.jenisGangguan.contains(kataCari, ignoreCase = true)
+    val statusMap = remember {
+        daftarLaporan.associateWith {
+            listOf(StatusLaporan.PROSES, StatusLaporan.SELESAI).random()
+        }
     }
 
-    Column(
+    val loveSet = remember { mutableStateListOf<String>() }
+
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFFF8F0))
             .padding(innerPadding)
+            .padding(bottom = 16.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().background(Color(0xFF4E342E)).padding(horizontal = 16.dp, vertical = 28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Pusat Laporan Fasilitas Kampus", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White, textAlign = TextAlign.Center)
-            HorizontalDivider(modifier = Modifier.padding(top = 10.dp), color = Color.White, thickness = 1.dp)
+
+        // HEADER
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF4E342E))
+                    .padding(horizontal = 16.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Pusat Laporan Fasilitas Kampus",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(top = 8.dp),
+                    color = Color.White,
+                    thickness = 1.dp
+                )
+            }
         }
 
-        OutlinedTextField(
-            value         = kataCari,
-            onValueChange = { kataCari = it },
-            placeholder   = { Text("Cari fasilitas, lokasi, gangguan...") },
-            singleLine    = true,
-            modifier      = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
-            shape         = RoundedCornerShape(10.dp),
-            colors        = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF4E342E), unfocusedBorderColor = Color(0xFFBCAAA4))
-        )
+        // LAPORAN TERBARU (SCROLL SAMPING)
+        item {
+            Text(
+                "Laporan Terbaru",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = Color(0xFF4E342E),
+                modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)
+            )
 
-        LazyColumn(
-            modifier            = Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-            contentPadding      = PaddingValues(bottom = 10.dp)
-        ) {
-            items(laporanFilter) { laporan ->
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp)
+            ) {
+                items(daftarLaporan.take(5)) { laporan ->
+                    val isLoved = laporan.namaBenda in loveSet
 
-                val status = remember { listOf(StatusLaporan.PROSES, StatusLaporan.SELESAI).random() }
+                    Card(
+                        modifier = Modifier.width(130.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Box {
+                            Image(
+                                painter = painterResource(laporan.imageRes),
+                                contentDescription = laporan.namaBenda,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(100.dp)
+                            )
 
-                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp), elevation = CardDefaults.cardElevation(3.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                    Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Image(painter = painterResource(id = laporan.imageRes), contentDescription = laporan.namaBenda, modifier = Modifier.size(110.dp).clip(RoundedCornerShape(8.dp)), contentScale = Crop)
-                        Column(modifier = Modifier.weight(1f)) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(100.dp)
+                                    .background(
+                                        Brush.verticalGradient(
+                                            listOf(Color.Transparent, Color(0xAA000000))
+                                        )
+                                    )
+                            )
 
-                            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text(laporan.namaBenda, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFF3E2723), modifier = Modifier.weight(1f))
-                                Surface(color = warnaBadge(status), shape = RoundedCornerShape(4.dp)) {
-                                    Text(teksStatus(status), fontSize = 10.sp, color = Color.White, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
-                                }
-                            }
+                            Text(
+                                laporan.namaBenda,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .padding(6.dp)
+                            )
 
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text("Gangguan: ${laporan.jenisGangguan}", fontSize = 12.sp, color = Color(0xFF5D4037))
-                            Text("Lokasi: ${laporan.lokasi}",          fontSize = 12.sp, color = Color(0xFF5D4037))
-                            Text("${laporan.tanggalLaporan}",           fontSize = 11.sp, color = Color.Gray)
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            Button(onClick = {}, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(6.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4E342E)), contentPadding = PaddingValues(vertical = 4.dp)) {
-                                Text("Detail", fontSize = 12.sp, color = Color.White)
+                            IconButton(
+                                onClick = {
+                                    if (isLoved) loveSet.remove(laporan.namaBenda)
+                                    else loveSet.add(laporan.namaBenda)
+                                },
+                                modifier = Modifier.align(Alignment.TopEnd)
+                            ) {
+                                Icon(
+                                    imageVector = if (isLoved) Icons.Filled.Favorite
+                                    else Icons.Filled.FavoriteBorder,
+                                    contentDescription = null,
+                                    tint = if (isLoved) Color.Red else Color.White
+                                )
                             }
                         }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Text(
+                "Daftar Laporan Lengkap",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = Color(0xFF4E342E),
+                modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)
+            )
+        }
+
+        // DAFTAR LENGKAP (SCROLL BAWAH)
+        items(daftarLaporan) { laporan ->
+            val status = statusMap[laporan] ?: StatusLaporan.PROSES
+            val isLoved = laporan.namaBenda in loveSet
+
+            val warnaBadge =
+                if (status == StatusLaporan.PROSES) Color(0xFF1976D2)
+                else Color(0xFF388E3C)
+
+            val teksBadge =
+                if (status == StatusLaporan.PROSES) "Diproses"
+                else "Selesai"
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Box {
+                    Image(
+                        painter = painterResource(laporan.imageRes),
+                        contentDescription = laporan.namaBenda,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp)
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, Color(0xBB000000))
+                                )
+                            )
+                    )
+
+                    Text(
+                        laporan.namaBenda,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(10.dp)
+                    )
+
+                    Surface(
+                        color = warnaBadge,
+                        shape = RoundedCornerShape(6.dp),
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(8.dp)
+                    ) {
+                        Text(
+                            teksBadge,
+                            fontSize = 10.sp,
+                            color = Color.White,
+                            modifier = Modifier.padding(6.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = {
+                            if (isLoved) loveSet.remove(laporan.namaBenda)
+                            else loveSet.add(laporan.namaBenda)
+                        },
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    ) {
+                        Icon(
+                            imageVector = if (isLoved) Icons.Filled.Favorite
+                            else Icons.Filled.FavoriteBorder,
+                            contentDescription = null,
+                            tint = if (isLoved) Color.Red else Color.White
+                        )
+                    }
+                }
+
+                Column(Modifier.padding(12.dp)) {
+                    Text("Gangguan: ${laporan.jenisGangguan}")
+                    Text("Lokasi: ${laporan.lokasi}")
+                    Text(laporan.tanggalLaporan, fontSize = 12.sp)
+
+                    Spacer(Modifier.height(6.dp))
+
+                    Button(
+                        onClick = {},
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Detail")
                     }
                 }
             }
@@ -132,6 +281,6 @@ fun HalamanUtama(innerPadding: PaddingValues) {
 @Composable
 fun PreviewHalaman() {
     PrakTAM_2457051004Theme {
-        HalamanUtama(PaddingValues(3.dp))
+        HalamanUtama(PaddingValues(0.dp))
     }
 }

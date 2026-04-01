@@ -19,7 +19,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -64,7 +63,7 @@ fun HalamanUtama(innerPadding: PaddingValues) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFFF8F0))
+            .background(Color(0xFFFFF5F5))
             .padding(innerPadding)
             .padding(bottom = 16.dp)
     ) {
@@ -74,7 +73,7 @@ fun HalamanUtama(innerPadding: PaddingValues) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF4E342E))
+                    .background(Color(0xFFC62828))
                     .padding(horizontal = 16.dp, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -99,7 +98,7 @@ fun HalamanUtama(innerPadding: PaddingValues) {
                 "Laporan Terbaru",
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
-                color = Color(0xFF4E342E),
+                color = Color(0xFFC62828),
                 modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)
             )
 
@@ -115,51 +114,57 @@ fun HalamanUtama(innerPadding: PaddingValues) {
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Box {
-                            Image(
-                                painter = painterResource(laporan.imageRes),
-                                contentDescription = laporan.namaBenda,
-                                contentScale = ContentScale.Crop,
+                            androidx.compose.foundation.layout.Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(100.dp)
-                            )
-
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(100.dp)
-                                    .background(
-                                        Brush.verticalGradient(
-                                            listOf(Color.Transparent, Color(0xAA000000))
-                                        )
-                                    )
-                            )
-
-                            Text(
-                                laporan.namaBenda,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier
-                                    .align(Alignment.BottomStart)
-                                    .padding(6.dp)
-                            )
-
-                            IconButton(
-                                onClick = {
-                                    if (isLoved) loveSet.remove(laporan.namaBenda)
-                                    else loveSet.add(laporan.namaBenda)
-                                },
-                                modifier = Modifier.align(Alignment.TopEnd)
                             ) {
-                                Icon(
-                                    imageVector = if (isLoved) Icons.Filled.Favorite
-                                    else Icons.Filled.FavoriteBorder,
-                                    contentDescription = null,
-                                    tint = if (isLoved) Color.Red else Color.White
+                                Image(
+                                    painter = painterResource(laporan.imageRes),
+                                    contentDescription = laporan.namaBenda,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(100.dp)
                                 )
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(100.dp)
+                                        .background(
+                                            Brush.verticalGradient(
+                                                listOf(Color.Transparent, Color(0xAA000000))
+                                            )
+                                        )
+                                )
+
+                                Text(
+                                    laporan.namaBenda,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier
+                                        .align(Alignment.BottomStart)
+                                        .padding(6.dp)
+                                )
+
+                                IconButton(
+                                    onClick = {
+                                        if (isLoved) loveSet.remove(laporan.namaBenda)
+                                        else loveSet.add(laporan.namaBenda)
+                                    },
+                                    modifier = Modifier.align(Alignment.TopEnd)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isLoved) Icons.Filled.Favorite
+                                        else Icons.Filled.FavoriteBorder,
+                                        contentDescription = null,
+                                        tint = if (isLoved) Color.Red else Color.White
+                                    )
+                                }
                             }
                         }
                     }
@@ -172,7 +177,7 @@ fun HalamanUtama(innerPadding: PaddingValues) {
                 "Daftar Laporan Lengkap",
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
-                color = Color(0xFF4E342E),
+                color = Color(0xFFC62828),
                 modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)
             )
         }

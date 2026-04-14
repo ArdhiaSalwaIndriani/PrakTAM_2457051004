@@ -30,6 +30,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.praktam_2457051004.ui.theme.PrakTAM_2457051004Theme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,8 +39,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PrakTAM_2457051004Theme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    HalamanUtama(innerPadding)
+                val snackbarHostState = remember { SnackbarHostState() }
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+                ) { innerPadding ->
+                    HalamanUtama(innerPadding, snackbarHostState)
                 }
             }
         }
@@ -48,7 +54,7 @@ class MainActivity : ComponentActivity() {
 enum class StatusLaporan { PROSES, SELESAI }
 
 @Composable
-fun HalamanUtama(innerPadding: PaddingValues) {
+fun HalamanUtama(innerPadding: PaddingValues, snackbarHostState: SnackbarHostState) {
 
     val daftarLaporan = FasilinkSource.LaporKampus
 
@@ -59,6 +65,8 @@ fun HalamanUtama(innerPadding: PaddingValues) {
     }
 
     val loveSet = remember { mutableStateListOf<String>() }
+    val loadingSet = remember { mutableStateListOf<String>() }
+    val coroutineScope = rememberCoroutineScope()
 
     LazyColumn(
         modifier = Modifier
@@ -99,7 +107,7 @@ fun HalamanUtama(innerPadding: PaddingValues) {
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 color = Color(0xFFC62828),
-                modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)
+                modifier = Modifier.padding(start = 12.dp, top = 12.dp, bottom = 8.dp)
             )
 
             LazyRow(
@@ -114,7 +122,7 @@ fun HalamanUtama(innerPadding: PaddingValues) {
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Box {
-                            androidx.compose.foundation.layout.Box(
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(100.dp)
@@ -186,6 +194,7 @@ fun HalamanUtama(innerPadding: PaddingValues) {
         items(daftarLaporan) { laporan ->
             val status = statusMap[laporan] ?: StatusLaporan.PROSES
             val isLoved = laporan.namaBenda in loveSet
+            val isLoading = laporan.namaBenda in loadingSet
 
             val warnaBadge =
                 if (status == StatusLaporan.PROSES) Color(0xFF1976D2)
@@ -271,10 +280,45 @@ fun HalamanUtama(innerPadding: PaddingValues) {
                     Spacer(Modifier.height(6.dp))
 
                     Button(
-                        onClick = {},
-                        modifier = Modifier.fillMaxWidth()
+                        onClick = {
+                            coroutineScope.launch {
+                                loadingSet.add(laporan.namaBenda)
+                                delay(2000L)
+                                loadingSet.remove(laporan.namaBenda)
+
+                                val pesanFeedback = when (status) {
+                                    StatusLaporan.PROSES ->
+                                        "✅ Laporan '${laporan.namaBenda}' berhasil ditandai selesai!"
+                                    StatusLaporan.SELESAI ->
+                                        "ℹ️ Laporan '${laporan.namaBenda}' sudah selesai ditangani."
+                                }
+                                snackbarHostState.showSnackbar(
+                                    message = pesanFeedback,
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        },
+                        enabled = !isLoading,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFC62828),
+                            disabledContainerColor = Color(0xFFEF9A9A)
+                        )
                     ) {
-                        Text("Detail")
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("Memproses...", color = Color.White)
+                        } else {
+                            Text(
+                                text = if (status == StatusLaporan.SELESAI) "Lihat Detail" else "Tandai Selesai",
+                                color = Color.White
+                            )
+                        }
                     }
                 }
             }
@@ -286,6 +330,7 @@ fun HalamanUtama(innerPadding: PaddingValues) {
 @Composable
 fun PreviewHalaman() {
     PrakTAM_2457051004Theme {
-        HalamanUtama(PaddingValues(0.dp))
+        val snackbarHostState = remember { SnackbarHostState() }
+        HalamanUtama(PaddingValues(0.dp), snackbarHostState)
     }
 }

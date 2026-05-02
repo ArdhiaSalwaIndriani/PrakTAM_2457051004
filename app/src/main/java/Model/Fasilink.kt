@@ -1,11 +1,20 @@
 package Model
 
-import androidx.annotation.DrawableRes
+import com.google.gson.annotations.SerializedName
 
 data class Fasilink(
+    @SerializedName("jenis_gangguan")
     val jenisGangguan: String,
+
+    @SerializedName("nama_benda")
     val namaBenda: String,
+
+    @SerializedName("lokasi")
     val lokasi: String,
+
+    @SerializedName("tanggal_laporan")
     val tanggalLaporan: String,
-    @field:DrawableRes val imageRes: Int
+
+    @SerializedName("image_url")
+    val imageUrl: String
 )

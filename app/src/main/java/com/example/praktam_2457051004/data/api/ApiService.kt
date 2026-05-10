@@ -1,6 +1,6 @@
-package com.example.praktam_2457051004.network
+package com.example.praktam_2457051004.data.api
 
-import Model.Fasilink
+import com.example.praktam_2457051004.data.model.Fasilink
 import retrofit2.http.GET
 
 interface ApiService {

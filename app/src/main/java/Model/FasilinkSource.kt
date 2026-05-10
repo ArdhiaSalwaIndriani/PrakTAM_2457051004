@@ -1,5 +1,0 @@
-package Model
-
-object FasilinkSource {
-
-}

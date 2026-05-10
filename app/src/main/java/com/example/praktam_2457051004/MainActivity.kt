@@ -1,6 +1,5 @@
 package com.example.praktam_2457051004
 
-import Model.Fasilink
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,7 +23,8 @@ import androidx.compose.ui.unit.*
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import coil.compose.AsyncImage
-import com.example.praktam_2457051004.network.RetrofitClient
+import com.example.praktam_2457051004.data.model.Fasilink
+import com.example.praktam_2457051004.data.repository.FasilinkRepository
 import com.example.praktam_2457051004.ui.theme.PrakTAM_2457051004Theme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -48,20 +48,30 @@ fun AppNavigation(navController: NavHostController) {
     val snackbar = remember { SnackbarHostState() }
     val laporan = remember { mutableStateListOf<Fasilink>() }
     val status = remember { mutableStateMapOf<String, StatusLaporan>() }
+
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf(false) }
 
+    val repository = remember { FasilinkRepository() }
+
     LaunchedEffect(Unit) {
         try {
-            val data = RetrofitClient.instance.getLaporan()
+            loading = true
+            error = false
+
+            val data = repository.getLaporan()
+
             laporan.clear()
             laporan.addAll(data)
+
             status.clear()
             data.forEachIndexed { i, item ->
-                status[item.namaBenda] = if (i % 2 == 0) StatusLaporan.DIPROSES else StatusLaporan.SELESAI
+                status[item.namaBenda] =
+                    if (i % 2 == 0) StatusLaporan.DIPROSES else StatusLaporan.SELESAI
             }
+
             loading = false
-            error = false
+            error = data.isEmpty()
         } catch (e: Exception) {
             loading = false
             error = true
@@ -69,15 +79,27 @@ fun AppNavigation(navController: NavHostController) {
     }
 
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
-        NavHost(navController, "home", Modifier.padding(padding)) {
+        NavHost(
+            navController = navController,
+            startDestination = "home",
+            modifier = Modifier.padding(padding)
+        ) {
             composable("home") {
                 HomeScreen(navController, laporan, status, snackbar, loading, error)
             }
+
             composable("detail/{namaBenda}") { backStack ->
                 val nama = backStack.arguments?.getString("namaBenda")
                 val item = laporan.find { it.namaBenda == nama }
+
                 if (item != null) {
-                    DetailScreen(item, status[item.namaBenda] ?: StatusLaporan.DIPROSES, navController)
+                    DetailScreen(
+                        laporan = item,
+                        status = status[item.namaBenda] ?: StatusLaporan.DIPROSES,
+                        navController = navController
+                    )
+                } else {
+                    CenterMessage(loading = false)
                 }
             }
         }
@@ -100,7 +122,9 @@ fun HomeScreen(
     Box(Modifier.fillMaxSize()) {
         when {
             loading -> CenterMessage(loading = true)
+
             error || laporan.isEmpty() -> CenterMessage(loading = false)
+
             else -> {
                 Box(
                     Modifier
@@ -142,12 +166,14 @@ fun HomeScreen(
 
                         items(laporan) { item ->
                             val isFav = item.namaBenda in fav
+
                             LaporanCard(
                                 laporan = item,
                                 status = status[item.namaBenda] ?: StatusLaporan.DIPROSES,
                                 isFavorite = isFav,
                                 onFavoriteClick = {
-                                    if (isFav) fav.remove(item.namaBenda) else fav.add(item.namaBenda)
+                                    if (isFav) fav.remove(item.namaBenda)
+                                    else fav.add(item.namaBenda)
                                 },
                                 onDetailClick = {
                                     navController.navigate("detail/${item.namaBenda}")
@@ -164,7 +190,7 @@ fun HomeScreen(
                             .align(Alignment.BottomEnd)
                             .padding(20.dp)
                     ) {
-                        Icon(Icons.Default.Add, "Tambah Laporan")
+                        Icon(Icons.Default.Add, contentDescription = "Tambah Laporan")
                     }
                 }
             }
@@ -182,10 +208,14 @@ fun HomeScreen(
                     tanggalLaporan = "Hari ini",
                     imageUrl = "https://picsum.photos/seed/laporanbaru/600/400"
                 )
+
                 laporan.add(0, baru)
                 status[baru.namaBenda] = StatusLaporan.DIPROSES
                 showDialog = false
-                scope.launch { snackbar.showSnackbar("Laporan $nama berhasil dikirim!") }
+
+                scope.launch {
+                    snackbar.showSnackbar("Laporan $nama berhasil dikirim!")
+                }
             }
         )
     }
@@ -207,15 +237,17 @@ fun CenterMessage(loading: Boolean) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    "Gagal Memuat Data",
+                    text = "Gagal Memuat Data",
                     color = Color.Red,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
+
                 Spacer(Modifier.height(8.dp))
+
                 Text(
-                    "Pastikan koneksi internet Anda menyala",
+                    text = "Pastikan koneksi internet Anda menyala",
                     color = Color.Gray,
                     fontSize = 14.sp,
                     textAlign = TextAlign.Center
@@ -226,7 +258,11 @@ fun CenterMessage(loading: Boolean) {
 }
 
 @Composable
-fun DetailScreen(laporan: Fasilink, status: StatusLaporan, navController: NavHostController) {
+fun DetailScreen(
+    laporan: Fasilink,
+    status: StatusLaporan,
+    navController: NavHostController
+) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -234,7 +270,12 @@ fun DetailScreen(laporan: Fasilink, status: StatusLaporan, navController: NavHos
     ) {
         item {
             Box {
-                ReportImage(laporan, Modifier.fillMaxWidth().height(260.dp))
+                ReportImage(
+                    laporan = laporan,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(260.dp)
+                )
 
                 Box(
                     modifier = Modifier
@@ -257,7 +298,7 @@ fun DetailScreen(laporan: Fasilink, status: StatusLaporan, navController: NavHos
                         .padding(16.dp)
                         .background(Color.Black.copy(alpha = 0.35f), CircleShape)
                 ) {
-                    Icon(Icons.Default.ArrowBack, "Kembali", tint = Color.White)
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Kembali", tint = Color.White)
                 }
 
                 Column(
@@ -267,8 +308,17 @@ fun DetailScreen(laporan: Fasilink, status: StatusLaporan, navController: NavHos
                 ) {
                     StatusChip(status)
                     Spacer(Modifier.height(10.dp))
-                    Text(laporan.namaBenda, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                    Text(laporan.jenisGangguan, color = Color.White.copy(alpha = 0.9f), fontSize = 15.sp)
+                    Text(
+                        text = laporan.namaBenda,
+                        color = Color.White,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = laporan.jenisGangguan,
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 15.sp
+                    )
                 }
             }
         }
@@ -286,16 +336,24 @@ fun DetailScreen(laporan: Fasilink, status: StatusLaporan, navController: NavHos
                     modifier = Modifier.padding(18.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text("Detail Laporan", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3E2723))
+                    Text(
+                        text = "Detail Laporan",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF3E2723)
+                    )
+
                     DetailRow("Nama fasilitas", laporan.namaBenda)
                     DetailRow("Jenis gangguan", laporan.jenisGangguan)
                     DetailRow("Lokasi", laporan.lokasi)
                     DetailRow("Tanggal laporan", laporan.tanggalLaporan)
+
                     Text(
-                        "Status: ${if (status == StatusLaporan.DIPROSES) "Diproses" else "Selesai"}",
+                        text = "Status: ${if (status == StatusLaporan.DIPROSES) "Diproses" else "Selesai"}",
                         fontWeight = FontWeight.Bold,
                         color = if (status == StatusLaporan.DIPROSES) Color(0xFFFFA726) else Color(0xFF43A047)
                     )
+
                     Button(
                         onClick = { navController.popBackStack() },
                         modifier = Modifier.fillMaxWidth(),
@@ -311,7 +369,10 @@ fun DetailScreen(laporan: Fasilink, status: StatusLaporan, navController: NavHos
 }
 
 @Composable
-fun AddDialog(onDismiss: () -> Unit, onKirim: (String, String, String) -> Unit) {
+fun AddDialog(
+    onDismiss: () -> Unit,
+    onKirim: (String, String, String) -> Unit
+) {
     var nama by remember { mutableStateOf("") }
     var gangguan by remember { mutableStateOf("") }
     var lokasi by remember { mutableStateOf("") }
@@ -321,7 +382,13 @@ fun AddDialog(onDismiss: () -> Unit, onKirim: (String, String, String) -> Unit) 
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Color.White,
-        title = { Text("Tambah Laporan Baru", fontWeight = FontWeight.Bold, color = Color(0xFF3E2723)) },
+        title = {
+            Text(
+                text = "Tambah Laporan Baru",
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF3E2723)
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Box(
@@ -331,11 +398,33 @@ fun AddDialog(onDismiss: () -> Unit, onKirim: (String, String, String) -> Unit) 
                         .background(Color(0xFFF1E6DE), RoundedCornerShape(16.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Foto fasilitas rusak", color = Color(0xFF795548), fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Foto fasilitas rusak",
+                        color = Color(0xFF795548),
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-                OutlinedTextField(nama, { nama = it }, label = { Text("Nama fasilitas") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(gangguan, { gangguan = it }, label = { Text("Jenis kerusakan") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(lokasi, { lokasi = it }, label = { Text("Lokasi") }, modifier = Modifier.fillMaxWidth())
+
+                OutlinedTextField(
+                    value = nama,
+                    onValueChange = { nama = it },
+                    label = { Text("Nama fasilitas") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = gangguan,
+                    onValueChange = { gangguan = it },
+                    label = { Text("Jenis kerusakan") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = lokasi,
+                    onValueChange = { lokasi = it },
+                    label = { Text("Lokasi") },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
         confirmButton = {
@@ -357,10 +446,16 @@ fun AddDialog(onDismiss: () -> Unit, onKirim: (String, String, String) -> Unit) 
                 }
             ) {
                 if (loading) {
-                    CircularProgressIndicator(Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
                     Spacer(Modifier.width(8.dp))
                     Text("Mengirim...")
-                } else Text("Kirim")
+                } else {
+                    Text("Kirim")
+                }
             }
         },
         dismissButton = {
@@ -376,18 +471,30 @@ fun HeaderFasilink() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Brush.verticalGradient(listOf(Color(0xFFA1887F), Color(0xFF8D6E63))))
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFFA1887F), Color(0xFF8D6E63))
+                )
+            )
             .padding(horizontal = 20.dp, vertical = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Fasilink", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(6.dp))
         Text(
-            "Pusat laporan fasilitas rusak di lingkungan kampus",
+            text = "Fasilink",
+            color = Color.White,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(6.dp))
+
+        Text(
+            text = "Pusat laporan fasilitas rusak di lingkungan kampus",
             color = Color.White.copy(alpha = 0.9f),
             fontSize = 14.sp,
             textAlign = TextAlign.Center
         )
+
         HorizontalDivider(
             modifier = Modifier
                 .padding(top = 14.dp)
@@ -423,8 +530,18 @@ fun StatCard(title: String, value: String, modifier: Modifier) {
             modifier = Modifier.padding(vertical = 14.dp, horizontal = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(value, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF795548))
-            Text(title, fontSize = 12.sp, color = Color(0xFF6D4C41))
+            Text(
+                text = value,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF795548)
+            )
+
+            Text(
+                text = title,
+                fontSize = 12.sp,
+                color = Color(0xFF6D4C41)
+            )
         }
     }
 }
@@ -432,7 +549,7 @@ fun StatCard(title: String, value: String, modifier: Modifier) {
 @Composable
 fun SectionTitle(title: String) {
     Text(
-        title,
+        text = title,
         fontSize = 18.sp,
         fontWeight = FontWeight.Bold,
         color = Color(0xFF3E2723),
@@ -452,18 +569,38 @@ fun MiniCard(laporan: Fasilink, onClick: () -> Unit) {
     ) {
         Box {
             ReportImage(laporan, Modifier.fillMaxSize())
+
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC3E2723))))
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color.Transparent, Color(0xCC3E2723))
+                        )
+                    )
             )
+
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(10.dp)
             ) {
-                Text(laporan.namaBenda, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(laporan.jenisGangguan, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    text = laporan.namaBenda,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Text(
+                    text = laporan.jenisGangguan,
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontSize = 11.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }
@@ -487,8 +624,20 @@ fun LaporanCard(
     ) {
         Column {
             Box {
-                ReportImage(laporan, Modifier.fillMaxWidth().height(185.dp))
-                StatusChip(status, Modifier.align(Alignment.TopStart).padding(12.dp))
+                ReportImage(
+                    laporan = laporan,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(185.dp)
+                )
+
+                StatusChip(
+                    status = status,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(12.dp)
+                )
+
                 IconButton(
                     onClick = onFavoriteClick,
                     modifier = Modifier
@@ -497,20 +646,43 @@ fun LaporanCard(
                         .background(Color.Black.copy(alpha = 0.30f), CircleShape)
                 ) {
                     Icon(
-                        if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                        "Favorit",
+                        imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        contentDescription = "Favorit",
                         tint = if (isFavorite) Color.Red else Color.White
                     )
                 }
             }
 
             Column(Modifier.padding(16.dp)) {
-                Text(laporan.namaBenda, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3E2723))
+                Text(
+                    text = laporan.namaBenda,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF3E2723)
+                )
+
                 Spacer(Modifier.height(8.dp))
-                Text("Gangguan: ${laporan.jenisGangguan}", fontSize = 14.sp, color = Color(0xFF5D4037))
-                Text("Lokasi: ${laporan.lokasi}", fontSize = 14.sp, color = Color(0xFF5D4037))
-                Text(laporan.tanggalLaporan, fontSize = 12.sp, color = Color(0xFF8D6E63))
+
+                Text(
+                    text = "Gangguan: ${laporan.jenisGangguan}",
+                    fontSize = 14.sp,
+                    color = Color(0xFF5D4037)
+                )
+
+                Text(
+                    text = "Lokasi: ${laporan.lokasi}",
+                    fontSize = 14.sp,
+                    color = Color(0xFF5D4037)
+                )
+
+                Text(
+                    text = laporan.tanggalLaporan,
+                    fontSize = 12.sp,
+                    color = Color(0xFF8D6E63)
+                )
+
                 Spacer(Modifier.height(14.dp))
+
                 Button(
                     onClick = onDetailClick,
                     modifier = Modifier.fillMaxWidth(),
@@ -539,21 +711,35 @@ fun ReportImage(laporan: Fasilink, modifier: Modifier) {
 @Composable
 fun DetailRow(label: String, value: String) {
     Column {
-        Text(label, fontSize = 12.sp, color = Color(0xFF8D6E63))
-        Text(value, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFF3E2723))
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = Color(0xFF8D6E63)
+        )
+
+        Text(
+            text = value,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color(0xFF3E2723)
+        )
     }
 }
 
 @Composable
 fun StatusChip(status: StatusLaporan, modifier: Modifier = Modifier) {
     val proses = status == StatusLaporan.DIPROSES
+
     Box(
         modifier = modifier
-            .background(if (proses) Color(0xFFFFA726) else Color(0xFF66BB6A), RoundedCornerShape(50))
+            .background(
+                color = if (proses) Color(0xFFFFA726) else Color(0xFF66BB6A),
+                shape = RoundedCornerShape(50)
+            )
             .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
         Text(
-            if (proses) "Diproses" else "Selesai",
+            text = if (proses) "Diproses" else "Selesai",
             color = Color.White,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold

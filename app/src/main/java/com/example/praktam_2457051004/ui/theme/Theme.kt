@@ -12,47 +12,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val FasilinkLightColors = lightColorScheme(
-    primary            = Red80,
-    onPrimary          = OnRed,
-    primaryContainer   = RedLight,
-    onPrimaryContainer = Red80,
-
-    secondary          = Pink80,
-    onSecondary        = OnPink,
-    secondaryContainer = Pink40,
-    onSecondaryContainer = OnPink,
-
-    background         = SoftWhite,
-    onBackground       = OnSoft,
-    surface            = PureWhite,
-    onSurface          = OnSurface,
-    surfaceVariant     = SurfaceVar,
-    onSurfaceVariant   = Red60,
-
-    error              = Color(0xFFB00020),
-    onError            = OnRed,
+    primary            = PrimaryNavy,
+    onPrimary          = Color.White,
+    secondary          = SecondaryAmber,
+    onSecondary        = Color.White,
+    background         = AppBackground,
+    onBackground       = TextPrimary,
+    surface            = CardBackground,
+    onSurface          = TextPrimary,
+    error              = ErrorRed,
+    onError            = Color.White
 )
 
 private val FasilinkDarkColors = darkColorScheme(
-    primary            = Red40,
-    onPrimary          = Red80,
-    primaryContainer   = Red60,
-    onPrimaryContainer = SoftWhite,
-
-    secondary          = Pink40,
-    onSecondary        = OnPink,
-    secondaryContainer = Pink80,
-    onSecondaryContainer = OnPink,
-
-    background         = Color(0xFF1A0000),
-    onBackground       = SoftWhite,
-    surface            = Color(0xFF2A0000),
-    onSurface          = RedLight,
-    surfaceVariant     = Color(0xFF3B0000),
-    onSurfaceVariant   = RedLight,
-
-    error              = Color(0xFFCF6679),
-    onError            = Color(0xFF1C0007),
+    primary            = PrimaryNavy,
+    onPrimary          = Color.White,
+    secondary          = SecondaryAmber,
+    onSecondary        = Color.White,
+    background         = Color(0xFF111827),
+    onBackground       = Color(0xFFF9FAFB),
+    surface            = Color(0xFF1F2937),
+    onSurface          = Color(0xFFF9FAFB),
+    error              = ErrorRed,
+    onError            = Color.White
 )
 
 @Composable

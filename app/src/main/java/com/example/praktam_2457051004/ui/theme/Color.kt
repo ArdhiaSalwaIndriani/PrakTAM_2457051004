@@ -2,28 +2,17 @@ package com.example.praktam_2457051004.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary - Red
-val Red80    = Color(0xFFC62828)
-val Red60    = Color(0xFFE53935)
-val Red40    = Color(0xFFEF9A9A)
-val RedLight = Color(0xFFFFCDD2)
+// Navy-Amber solid color theme
+val PrimaryNavy = Color(0xFF1E3A5F)
+val SecondaryAmber = Color(0xFFF59E0B)
+val AppBackground = Color(0xFFF5F7FA)
+val CardBackground = Color(0xFFFFFFFF)
 
-// Secondary - Light Red / Pink accent
-val Pink80   = Color(0xFFAD1457)
-val Pink60   = Color(0xFFE91E63)
-val Pink40   = Color(0xFFF48FB1)
+// Text Colors
+val TextPrimary = Color(0xFF1F2937)
+val TextSecondary = Color(0xFF6B7280)
 
-// Background & Surface
-val SoftWhite   = Color(0xFFFFF5F5)
-val PureWhite   = Color(0xFFFFFFFF)
-val SurfaceVar  = Color(0xFFFFEBEE)
-
-// Status Colors
-val StatusProses  = Color(0xFF1976D2)
-val StatusSelesai = Color(0xFF388E3C)
-
-// On-colors
-val OnRed     = Color(0xFFFFFFFF)
-val OnPink    = Color(0xFFFFFFFF)
-val OnSoft    = Color(0xFF3B0000)
-val OnSurface = Color(0xFF4A0000)
+// Status & Action Colors
+val StatusDiproses = Color(0xFFF59E0B)
+val StatusSelesai = Color(0xFF10B981)
+val ErrorRed = Color(0xFFEF4444)
